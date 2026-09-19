@@ -13,5 +13,4 @@
 - 手機 / 電腦響應式版面
 
 ## 網站
-部署完成後：
 https://sumi095226-ops.github.io/spanish-learning/
