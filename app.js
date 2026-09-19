@@ -224,7 +224,7 @@ function buildQuizPool(){
   const pool=[];
   DATA.vocab.forEach(v=>{
     const distract=shuffle(DATA.vocab.filter(x=>x[1]!==v[1])).slice(0,3).map(x=>x[2]);
-    pool.push({q:`「${v[1]}」是什麼意思？`,correct:v[2],options:shuffle([v[2],...distract])});
+    pool.push({q:`「${v[1]}」是什麼意思？`,audio:v[1],correct:v[2],options:shuffle([v[2],...distract])});
   });
   const extras=[
     ["「廁所在哪裡？」哪一句正確？","¿Dónde está el baño?",["¿Dónde está el baño?","¿Cuánto cuesta?","Tengo una reserva.","Me llamo Ana."]],
@@ -247,7 +247,7 @@ function renderQuestion(){
   answered=false;
   const q=quiz[qi];
   $("#quizCount").textContent=`${qi+1} / 10`;$("#quizScore").textContent=`${score} 分`;
-  $("#quizProgress").style.width=`${(qi+1)*10}%`;$("#quizQuestion").textContent=q.q;
+  $("#quizProgress").style.width=`${(qi+1)*10}%`;$("#quizQuestion").innerHTML=q.audio?`<span>${q.q}</span><button class="sound-btn quiz-listen-btn" data-speak="${q.audio}" aria-label="聽題目發音">🔊</button>`:`<span>${q.q}</span>`;
   $("#quizFeedback").textContent="";$("#nextQuestionBtn").classList.add("hidden");
   $("#answerGrid").innerHTML=q.options.map(o=>`<button class="answer-btn" data-answer="${o.replaceAll('"','&quot;')}">${o}</button>`).join("");
   $$("#answerGrid .answer-btn").forEach(b=>b.onclick=()=>answer(b));
