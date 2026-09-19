@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#e85d3f" />
+  <title>¡Hola! 西班牙文學習</title>
+  <meta name="description" content="給中文使用者的西班牙文入門學習網站：發音、單字、文法、情境會話、測驗與學習進度。" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#home" aria-label="回首頁">
+        <span class="brand-mark">¡H!</span>
+        <span class="brand-text">
+          <strong>¡Hola!</strong>
+          <small>西班牙文學習</small>
+        </span>
+      </a>
+
+      <nav class="nav" aria-label="主要導覽">
+        <button class="nav-item active" data-section="home"><span>⌂</span>首頁</button>
+        <button class="nav-item" data-section="pronunciation"><span>◉</span>發音入門</button>
+        <button class="nav-item" data-section="vocabulary"><span>▦</span>基礎單字</button>
+        <button class="nav-item" data-section="grammar"><span>✎</span>句型文法</button>
+        <button class="nav-item" data-section="conversation"><span>◌</span>情境會話</button>
+        <button class="nav-item" data-section="quiz"><span>✓</span>小測驗</button>
+      </nav>
+
+      <div class="sidebar-card">
+        <div class="streak-row">
+          <span class="streak-fire">🔥</span>
+          <div>
+            <small>今日連續學習</small>
+            <strong id="streakText">1 天</strong>
+          </div>
+        </div>
+        <div class="progress-track"><span id="sidebarProgress"></span></div>
+        <small id="progressText">完成 0%</small>
+      </div>
+    </aside>
+
+    <div class="main-wrap">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" aria-label="開啟選單">☰</button>
+        <div class="level-pill">目前程度 <strong>A1 入門</strong></div>
+        <div class="top-actions">
+          <button class="ghost-btn" id="resetBtn">重設進度</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="page active" id="home">
+          <div class="hero">
+            <div class="hero-copy">
+              <span class="eyebrow">SPANISH · A1</span>
+              <h1>每天 15 分鐘，<br>把西班牙文學起來。</h1>
+              <p>從發音、常用單字、基礎句型開始。每一課都可以直接聽發音，學完立刻做題。</p>
+              <div class="hero-actions">
+                <button class="primary-btn" data-go="pronunciation">開始第一課</button>
+                <button class="secondary-btn" data-go="quiz">直接測驗</button>
+              </div>
+              <div class="mini-stats">
+                <div><strong>6</strong><span>學習單元</span></div>
+                <div><strong>48+</strong><span>基礎單字</span></div>
+                <div><strong>20</strong><span>情境句子</span></div>
+              </div>
+            </div>
+            <div class="hero-art">
+              <div class="sun"></div>
+              <div class="arch arch-left"></div>
+              <div class="arch arch-right"></div>
+              <div class="hero-word-card card-one">
+                <span>Hola</span><small>你好</small>
+              </div>
+              <div class="hero-word-card card-two">
+                <span>Gracias</span><small>謝謝</small>
+              </div>
+              <div class="hero-word-card card-three">
+                <span>¿Qué tal?</span><small>最近如何？</small>
+              </div>
+              <div class="hero-caption">Habla · Escucha · Practica</div>
+            </div>
+          </div>
+
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">LEARNING PATH</span>
+              <h2>你的入門路線</h2>
+            </div>
+            <span class="muted">建議依序完成</span>
+          </div>
+
+          <div class="lesson-grid">
+            <article class="lesson-card coral" data-go="pronunciation">
+              <div class="lesson-num">01</div>
+              <div class="lesson-icon">Aa</div>
+              <h3>發音入門</h3>
+              <p>母音、ñ、j、r / rr，以及最容易唸錯的規則。</p>
+              <span class="lesson-meta">約 10 分鐘 →</span>
+            </article>
+            <article class="lesson-card sand" data-go="vocabulary">
+              <div class="lesson-num">02</div>
+              <div class="lesson-icon">Hola</div>
+              <h3>基礎單字</h3>
+              <p>問候、數字、時間、飲食、交通與旅遊最常用單字。</p>
+              <span class="lesson-meta">48+ 單字 →</span>
+            </article>
+            <article class="lesson-card sky" data-go="grammar">
+              <div class="lesson-num">03</div>
+              <div class="lesson-icon">Yo</div>
+              <h3>句型文法</h3>
+              <p>ser / estar、名詞性別、冠詞、現在式與問句。</p>
+              <span class="lesson-meta">6 個重點 →</span>
+            </article>
+            <article class="lesson-card mint" data-go="conversation">
+              <div class="lesson-num">04</div>
+              <div class="lesson-icon">💬</div>
+              <h3>情境會話</h3>
+              <p>餐廳、飯店、購物、問路、初次見面直接開口。</p>
+              <span class="lesson-meta">5 個情境 →</span>
+            </article>
+          </div>
+
+          <div class="daily-card">
+            <div>
+              <span class="eyebrow">TODAY'S PHRASE</span>
+              <h2>今日一句</h2>
+              <div class="daily-spanish">¿Me puede ayudar?</div>
+              <p>可以幫我嗎？</p>
+            </div>
+            <button class="sound-btn big" data-speak="¿Me puede ayudar?" aria-label="播放發音">▶</button>
+          </div>
+        </section>
+
+        <section class="page" id="pronunciation">
+          <div class="page-hero compact">
+            <span class="eyebrow">LESSON 01</span>
+            <h1>發音入門</h1>
+            <p>西班牙文拼讀規則相對穩定。先把幾個核心音抓住，就能開始唸大多數單字。</p>
+          </div>
+
+          <div class="content-grid">
+            <article class="content-card wide">
+              <div class="card-head">
+                <div><span class="tag">01</span><h2>五個母音</h2></div>
+                <span class="muted">點擊喇叭聽發音</span>
+              </div>
+              <div class="vowel-grid" id="vowelGrid"></div>
+            </article>
+
+            <article class="content-card">
+              <span class="tag">02</span>
+              <h2>ñ</h2>
+              <p>接近中文「ㄋㄧ」連在一起的鼻音，類似英文 canyon 裡的 ny。</p>
+              <div class="example-row"><div><strong>niño</strong><small>男孩</small></div><button class="sound-btn" data-speak="niño">▶</button></div>
+              <div class="example-row"><div><strong>España</strong><small>西班牙</small></div><button class="sound-btn" data-speak="España">▶</button></div>
+            </article>
+
+            <article class="content-card">
+              <span class="tag">03</span>
+              <h2>j</h2>
+              <p>比英文 h 更靠後、帶摩擦感。不要唸成英文的 /dʒ/。</p>
+              <div class="example-row"><div><strong>jamón</strong><small>火腿</small></div><button class="sound-btn" data-speak="jamón">▶</button></div>
+              <div class="example-row"><div><strong>José</strong><small>José（人名）</small></div><button class="sound-btn" data-speak="José">▶</button></div>
+            </article>
+
+            <article class="content-card">
+              <span class="tag">04</span>
+              <h2>r / rr</h2>
+              <p>單 r 通常是輕彈舌；rr 或字首 r 通常要顫舌。初學不會顫舌也沒關係，先能區分即可。</p>
+              <div class="example-row"><div><strong>pero</strong><small>但是</small></div><button class="sound-btn" data-speak="pero">▶</button></div>
+              <div class="example-row"><div><strong>perro</strong><small>狗</small></div><button class="sound-btn" data-speak="perro">▶</button></div>
+            </article>
+
+            <article class="content-card">
+              <span class="tag">05</span>
+              <h2>h 不發音</h2>
+              <p>西班牙文的 h 通常不發音。</p>
+              <div class="example-row"><div><strong>hola</strong><small>你好</small></div><button class="sound-btn" data-speak="hola">▶</button></div>
+              <div class="example-row"><div><strong>hotel</strong><small>飯店</small></div><button class="sound-btn" data-speak="hotel">▶</button></div>
+            </article>
+          </div>
+
+          <button class="complete-btn" data-complete="pronunciation">完成這一課 ✓</button>
+        </section>
+
+        <section class="page" id="vocabulary">
+          <div class="page-hero compact">
+            <span class="eyebrow">LESSON 02</span>
+            <h1>基礎單字</h1>
+            <p>用主題篩選，點卡片播放發音。你可以把已經會的單字標記起來。</p>
+          </div>
+
+          <div class="filter-row" id="vocabFilters"></div>
+          <div class="vocab-grid" id="vocabGrid"></div>
+
+          <button class="complete-btn" data-complete="vocabulary">完成這一課 ✓</button>
+        </section>
+
+        <section class="page" id="grammar">
+          <div class="page-hero compact">
+            <span class="eyebrow">LESSON 03</span>
+            <h1>句型文法</h1>
+            <p>先學最常用、最能直接拿去說的規則。</p>
+          </div>
+          <div class="grammar-list" id="grammarList"></div>
+          <button class="complete-btn" data-complete="grammar">完成這一課 ✓</button>
+        </section>
+
+        <section class="page" id="conversation">
+          <div class="page-hero compact">
+            <span class="eyebrow">LESSON 04</span>
+            <h1>情境會話</h1>
+            <p>旅行時真的會用到的句子。先聽，再跟著唸。</p>
+          </div>
+          <div class="scenario-tabs" id="scenarioTabs"></div>
+          <div class="conversation-card" id="conversationCard"></div>
+          <button class="complete-btn" data-complete="conversation">完成這一課 ✓</button>
+        </section>
+
+        <section class="page" id="quiz">
+          <div class="page-hero compact">
+            <span class="eyebrow">PRACTICE</span>
+            <h1>小測驗</h1>
+            <p>每次隨機出 10 題。完成後會記錄最佳成績。</p>
+          </div>
+
+          <div class="quiz-shell">
+            <div id="quizIntro">
+              <div class="score-ring">
+                <span>BEST</span>
+                <strong id="bestScore">—</strong>
+              </div>
+              <h2>準備好了嗎？</h2>
+              <p>題目包含單字、文法與情境句子。</p>
+              <button class="primary-btn" id="startQuizBtn">開始 10 題</button>
+            </div>
+            <div id="quizPlay" class="hidden">
+              <div class="quiz-top">
+                <span id="quizCount">1 / 10</span>
+                <div class="quiz-progress"><span id="quizProgress"></span></div>
+                <span id="quizScore">0 分</span>
+              </div>
+              <div class="quiz-question" id="quizQuestion"></div>
+              <div class="answer-grid" id="answerGrid"></div>
+              <div class="quiz-feedback" id="quizFeedback"></div>
+              <button class="primary-btn hidden" id="nextQuestionBtn">下一題</button>
+            </div>
+            <div id="quizResult" class="hidden">
+              <div class="result-emoji" id="resultEmoji">🎉</div>
+              <h2 id="resultTitle">完成！</h2>
+              <div class="result-score" id="resultScore">8 / 10</div>
+              <p id="resultText"></p>
+              <button class="primary-btn" id="retryQuizBtn">再測一次</button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <span>¡Hola! Spanish Learning · A1 Starter</span>
+        <span>瀏覽器語音由 Web Speech API 提供</span>
+      </footer>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
