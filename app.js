@@ -320,82 +320,76 @@ function updateVisit(){
 }
 updateVisit();
 
-let highQualityAudioManifest = null;
-let highQualityManifestPromise = null;
 let currentHighQualityAudio = null;
 
 function normalizeAudioKey(text){
   return String(text ?? "").normalize("NFC").trim();
 }
 
-async function loadHighQualityAudioManifest(){
-  if(highQualityAudioManifest) return highQualityAudioManifest;
-  if(highQualityManifestPromise) return highQualityManifestPromise;
-
-  highQualityManifestPromise = fetch("audio/manifest.json?v=kokoro-2", {cache:"no-store"})
-    .then(r => {
-      if(!r.ok) throw new Error("Kokoro manifest unavailable");
-      return r.json();
-    })
-    .then(data => {
-      const normalized = {};
-      Object.entries(data || {}).forEach(([key,value])=>{
-        normalized[normalizeAudioKey(key)] = value;
-      });
-      highQualityAudioManifest = normalized;
-      return normalized;
-    })
-    .catch(err => {
-      highQualityManifestPromise = null;
-      console.error("Unable to load Kokoro audio manifest", err);
-      throw err;
+function kokoroManifest(){
+  const raw = window.KOKORO_AUDIO_MANIFEST || {};
+  if(!window.__KOKORO_NORMALIZED_MANIFEST__){
+    const normalized = {};
+    Object.entries(raw).forEach(([key,value])=>{
+      normalized[normalizeAudioKey(key)] = value;
     });
-
-  return highQualityManifestPromise;
+    window.__KOKORO_NORMALIZED_MANIFEST__ = normalized;
+  }
+  return window.__KOKORO_NORMALIZED_MANIFEST__;
 }
 
-async function speak(text){
+function speak(text){
   const key = normalizeAudioKey(text);
+  const manifest = kokoroManifest();
+  const audioPath = manifest[key];
 
   if(currentHighQualityAudio){
     currentHighQualityAudio.pause();
     currentHighQualityAudio.currentTime = 0;
     currentHighQualityAudio = null;
   }
-  if("speechSynthesis" in window) speechSynthesis.cancel();
 
-  try{
-    const manifest = await loadHighQualityAudioManifest();
-    const audioPath = manifest[key];
+  if(!audioPath){
+    console.error("No Kokoro clip for:", key, Object.keys(manifest));
+    alert("這個發音音檔暫時沒有載入，請重新整理頁面後再試。");
+    return;
+  }
 
-    if(!audioPath){
-      console.error("No Kokoro clip for:", key);
-      alert("這個發音音檔暫時沒有載入，請重新整理後再試。");
-      return;
-    }
+  // Resolve relative to the site root and start playback immediately in the click handler.
+  const audioUrl = new URL(audioPath, document.baseURI);
+  const audio = new Audio();
+  audio.preload = "auto";
+  audio.src = audioUrl.href;
+  currentHighQualityAudio = audio;
 
-    const audioUrl = new URL(audioPath, document.baseURI);
-    audioUrl.searchParams.set("v","kokoro-2");
+  audio.addEventListener("ended", ()=>{
+    if(currentHighQualityAudio === audio) currentHighQualityAudio = null;
+  }, {once:true});
 
-    const audio = new Audio(audioUrl.href);
-    audio.preload = "auto";
-    currentHighQualityAudio = audio;
-    audio.addEventListener("ended", ()=>{
-      if(currentHighQualityAudio === audio) currentHighQualityAudio = null;
-    }, {once:true});
-    audio.addEventListener("error", ()=>{
-      console.error("Kokoro audio failed:", audioUrl.href);
-    }, {once:true});
+  audio.addEventListener("error", ()=>{
+    console.error("Kokoro audio file failed:", audioUrl.href, audio.error);
+    if(currentHighQualityAudio === audio) currentHighQualityAudio = null;
+    alert("這個音檔載入失敗，請再按一次；如果持續發生請重新整理頁面。");
+  }, {once:true});
 
-    await audio.play();
-  }catch(e){
-    console.error("Kokoro playback failed", e);
-    alert("語音載入失敗，請重新整理頁面後再試。");
+  const playPromise = audio.play();
+  if(playPromise && typeof playPromise.catch === "function"){
+    playPromise.catch(err=>{
+      console.error("Kokoro playback failed:", key, err);
+      // A second play after the file becomes ready fixes transient decoding/loading cases
+      // without falling back to robotic browser speech.
+      const retry = ()=>{
+        audio.play().catch(e=>{
+          console.error("Kokoro retry failed:", e);
+          if(currentHighQualityAudio === audio) currentHighQualityAudio = null;
+          alert("這個音檔暫時無法播放，請再按一次。");
+        });
+      };
+      if(audio.readyState >= 2) retry();
+      else audio.addEventListener("canplay", retry, {once:true});
+    });
   }
 }
-
-// Preload the manifest once so every lesson uses the exact same Kokoro audio pipeline.
-loadHighQualityAudioManifest().catch(()=>{});
 document.addEventListener("click", e=>{
   const s = e.target.closest("[data-speak]");
   if(s){ e.stopPropagation(); speak(s.dataset.speak); }
