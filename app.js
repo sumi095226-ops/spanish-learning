@@ -310,6 +310,24 @@ function updateVisit(){
 updateVisit();
 
 let spanishVoice = null;
+let highQualityAudioManifest = null;
+let highQualityManifestPromise = null;
+let currentHighQualityAudio = null;
+
+async function loadHighQualityAudioManifest(){
+  if(highQualityAudioManifest) return highQualityAudioManifest;
+  if(highQualityManifestPromise) return highQualityManifestPromise;
+
+  highQualityManifestPromise = fetch("audio/manifest.json", {cache:"no-cache"})
+    .then(r => r.ok ? r.json() : {})
+    .catch(() => ({}))
+    .then(data => {
+      highQualityAudioManifest = data || {};
+      return highQualityAudioManifest;
+    });
+
+  return highQualityManifestPromise;
+}
 
 function pickNaturalSpanishVoice(){
   const voices = speechSynthesis.getVoices();
@@ -328,7 +346,6 @@ function pickNaturalSpanishVoice(){
     if(lang === "es-mx") s += 18;
     if(lang === "es-us") s += 16;
     if(lang === "es-es") s += 14;
-    if(v.localService === false) s += 8;
     return s;
   };
 
@@ -336,16 +353,40 @@ function pickNaturalSpanishVoice(){
 }
 
 function refreshSpanishVoice(){
-  spanishVoice = pickNaturalSpanishVoice();
+  if("speechSynthesis" in window) spanishVoice = pickNaturalSpanishVoice();
 }
 refreshSpanishVoice();
 if("speechSynthesis" in window){
   speechSynthesis.onvoiceschanged = refreshSpanishVoice;
 }
 
-function speak(text){
-  if(!("speechSynthesis" in window)){ alert("此瀏覽器不支援語音播放"); return; }
-  speechSynthesis.cancel();
+async function speak(text){
+  if(currentHighQualityAudio){
+    currentHighQualityAudio.pause();
+    currentHighQualityAudio.currentTime = 0;
+    currentHighQualityAudio = null;
+  }
+  if("speechSynthesis" in window) speechSynthesis.cancel();
+
+  try{
+    const manifest = await loadHighQualityAudioManifest();
+    const audioPath = manifest[text];
+    if(audioPath){
+      const audio = new Audio(audioPath);
+      currentHighQualityAudio = audio;
+      audio.addEventListener("ended", ()=>{ if(currentHighQualityAudio === audio) currentHighQualityAudio = null; }, {once:true});
+      await audio.play();
+      return;
+    }
+  }catch(e){
+    console.warn("High-quality audio unavailable; using browser fallback.", e);
+  }
+
+  if(!("speechSynthesis" in window)){
+    alert("目前無法播放語音");
+    return;
+  }
+
   const u = new SpeechSynthesisUtterance(text);
   if(!spanishVoice) refreshSpanishVoice();
   if(spanishVoice){
