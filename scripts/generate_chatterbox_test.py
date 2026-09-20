@@ -31,7 +31,7 @@ def main():
     set_seed()
 
     print("Loading Chatterbox Multilingual V3 on CPU...")
-    model = ChatterboxMultilingualTTS.from_pretrained(device="cpu", t3_model="v3")
+    model = ChatterboxMultilingualTTS.from_pretrained(device=torch.device("cpu"), t3_model="v3")
     manifest = {}
 
     for i, text in enumerate(PHRASES, 1):
