@@ -293,7 +293,18 @@ function resetPlacementOnly(){
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
-const state = JSON.parse(localStorage.getItem("holaProgress") || '{"completed":[],"known":[],"best":null,"lastVisit":null,"streak":1}');
+let state;
+try{
+  state = JSON.parse(localStorage.getItem("holaProgress") || "{}");
+}catch(e){
+  state = {};
+}
+state.completed = Array.isArray(state.completed) ? state.completed : [];
+state.known = Array.isArray(state.known) ? state.known : [];
+state.best = Number.isFinite(state.best) ? state.best : null;
+state.lastVisit = typeof state.lastVisit === "string" ? state.lastVisit : null;
+state.streak = Number.isFinite(state.streak) && state.streak > 0 ? state.streak : 1;
+state.placementLevel = ["A1","A2","B1","B2"].includes(state.placementLevel) ? state.placementLevel : null;
 const save = () => localStorage.setItem("holaProgress", JSON.stringify(state));
 
 function updateVisit(){
@@ -406,8 +417,22 @@ document.addEventListener("click", e=>{
 });
 
 function go(section){
-  $$(".page").forEach(p=>p.classList.toggle("active", p.id===section));
-  $$(".nav-item").forEach(n=>n.classList.toggle("active", n.dataset.section===section));
+  // Dynamic lessons are rendered on demand as well as at startup.
+  // This also repairs pages for returning users with older saved progress data.
+  if(section === "vocabulary"){
+    renderVocabFilters();
+    renderVocab();
+  }else if(section === "grammar"){
+    renderGrammar();
+  }else if(section === "conversation"){
+    renderScenarios();
+    renderConversation();
+  }else if(section === "pronunciation"){
+    renderVowels();
+  }
+
+  $(".page").forEach(p=>p.classList.toggle("active", p.id===section));
+  $(".nav-item").forEach(n=>n.classList.toggle("active", n.dataset.section===section));
   window.scrollTo({top:0,behavior:"smooth"});
   $("#sidebar").classList.remove("open");
 }
