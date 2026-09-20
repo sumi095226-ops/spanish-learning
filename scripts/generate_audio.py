@@ -7,13 +7,18 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-MODEL = "gpt-4o-mini-tts"
-VOICE = "marin"
-SPEED = 0.95
+MODEL = "gpt-4o-mini-tts-2025-12-15"
+VOICE = "cedar"
+SPEED = 1.0
 INSTRUCTIONS = (
-    "Speak the Spanish exactly as written. Use a natural native Latin American Spanish accent, "
-    "warm and conversational, clear for a language learner, at a normal relaxed pace. "
-    "Do not spell the word, do not add explanations, and do not add any extra words."
+    "Speak the Spanish exactly as written, and nothing else. Sound like a real native Spanish speaker "
+    "talking casually to one person in everyday conversation, not like a narrator, announcer, GPS, "
+    "language-learning robot, or audiobook. Use a natural Latin American Spanish accent, warm and relaxed. "
+    "Use human conversational prosody: natural rhythm, connected speech, subtle pitch movement, normal "
+    "micro-pauses, and gentle sentence-final intonation. Do not over-enunciate syllables and do not speak "
+    "artificially slowly. For a single word, imagine a friend asked how the word sounds: say it once, "
+    "naturally and confidently, without adding a carrier phrase. Preserve normal stress and pronunciation. "
+    "Do not spell, translate, explain, or add any extra words."
 )
 
 PHRASES = [
@@ -48,7 +53,7 @@ AUDIO_DIR.mkdir(exist_ok=True)
 
 def filename_for(text: str) -> str:
     digest = hashlib.sha1(text.encode("utf-8")).hexdigest()[:18]
-    return f"{digest}.mp3"
+    return f"{digest}.wav"
 
 def generate(text: str, out_path: Path, api_key: str):
     body = json.dumps({
@@ -56,7 +61,7 @@ def generate(text: str, out_path: Path, api_key: str):
         "voice": VOICE,
         "input": text,
         "instructions": INSTRUCTIONS,
-        "response_format": "mp3",
+        "response_format": "wav",
         "speed": SPEED,
     }, ensure_ascii=False).encode("utf-8")
 
@@ -93,9 +98,10 @@ def main():
     manifest = {}
 
     if not api_key:
-        print("OPENAI_API_KEY is not configured. Deploying with browser TTS fallback.")
-        MANIFEST_PATH.write_text("{}", encoding="utf-8")
-        return
+        raise RuntimeError(
+            "OPENAI_API_KEY is not configured. Add it in GitHub repository Settings > "
+            "Secrets and variables > Actions so high-quality Spanish audio can be generated."
+        )
 
     for i, text in enumerate(unique_phrases, 1):
         filename = filename_for(text)
