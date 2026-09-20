@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kokoro vs Chatterbox · 西班牙文語音試聽</title>
+  <style>
+    :root{--bg:#fbfaf7;--ink:#17283a;--muted:#6e7f8e;--line:#e6ded3;--accent:#ef5b3f;--card:#fff}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Noto Sans TC",system-ui,sans-serif}
+    .wrap{max-width:900px;margin:0 auto;padding:42px 22px 70px}
+    a{color:inherit}
+    .back{display:inline-block;margin-bottom:22px;color:var(--muted);text-decoration:none}
+    .eyebrow{font-size:12px;letter-spacing:.18em;color:var(--accent);font-weight:800}
+    h1{font-size:clamp(34px,6vw,58px);margin:8px 0 10px;line-height:1.05}
+    .lead{color:var(--muted);font-size:17px;line-height:1.7;margin:0 0 30px}
+    .note{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fff9f3;color:#6d594a;margin-bottom:26px}
+    .samples{display:grid;gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}
+    .phrase{font-size:24px;font-weight:800;margin-bottom:4px}
+    .zh{color:var(--muted);margin-bottom:16px}
+    .buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    button{border:0;border-radius:12px;padding:13px 16px;font-size:15px;font-weight:750;cursor:pointer}
+    .kokoro{background:#eef5f2;color:#214b42}
+    .chatter{background:#fff0ec;color:#9e3d29}
+    button:hover{filter:brightness(.97)}
+    button.playing{outline:3px solid rgba(239,91,63,.18)}
+    .status{margin-top:18px;color:var(--muted);font-size:14px}
+    @media(max-width:560px){.buttons{grid-template-columns:1fr}.phrase{font-size:21px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="./">← 回西班牙文學習</a>
+    <div class="eyebrow">VOICE A/B TEST</div>
+    <h1>Kokoro vs Chatterbox V3</h1>
+    <p class="lead">同一句西班牙文，直接比較目前網站的 Kokoro 與 Chatterbox Multilingual V3。正式網站目前仍維持 Kokoro，這一頁只做試聽。</p>
+    <div class="note">Chatterbox 這組使用西班牙文模式，語氣參數偏自然對話：exaggeration 0.55、cfg weight 0.35。</div>
+    <section class="samples" id="samples"></section>
+    <div class="status" id="status"></div>
+  </main>
+
+  <script src="audio/manifest.js?v=kokoro4"></script>
+  <script src="voice-test/chatterbox-manifest.js?v=chatterbox-v3-1"></script>
+  <script>
+    const ITEMS = [
+      ["hola","你好"],
+      ["buenos días","早安"],
+      ["Soy de Taiwán.","我來自台灣。"],
+      ["Hola, ¿cómo te llamas?","你好，你叫什麼名字？"],
+      ["Quiero un café y agua, por favor.","我要一杯咖啡和水，謝謝。"]
+    ];
+    let currentAudio=null,currentButton=null;
+
+    function stop(){
+      if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;currentAudio=null}
+      if(currentButton){currentButton.classList.remove("playing");currentButton=null}
+    }
+
+    function play(kind,text,button){
+      stop();
+      const source = kind==="kokoro"
+        ? (window.KOKORO_AUDIO_MANIFEST||{})[text]
+        : (window.CHATTERBOX_TEST_AUDIO||{})[text];
+
+      if(!source){
+        document.querySelector("#status").textContent =
+          kind==="kokoro" ? "Kokoro 音檔尚未載入。" : "Chatterbox 試聽音檔還沒生成完成。";
+        return;
+      }
+
+      const audio=new Audio(source);
+      currentAudio=audio;currentButton=button;
+      button.classList.add("playing");
+      document.querySelector("#status").textContent="";
+      audio.addEventListener("ended",stop,{once:true});
+      audio.addEventListener("error",()=>{
+        stop();
+        document.querySelector("#status").textContent="這個試聽音檔播放失敗，重新整理頁面後再試。";
+      },{once:true});
+      audio.play().catch(()=>{
+        stop();
+        document.querySelector("#status").textContent="瀏覽器阻擋了播放，請再按一次。";
+      });
+    }
+
+    document.querySelector("#samples").innerHTML=ITEMS.map(([es,zh],i)=>`
+      <article class="card">
+        <div class="phrase">${es}</div>
+        <div class="zh">${zh}</div>
+        <div class="buttons">
+          <button class="kokoro" data-kind="kokoro" data-i="${i}">▶ Kokoro</button>
+          <button class="chatter" data-kind="chatter" data-i="${i}">▶ Chatterbox V3</button>
+        </div>
+      </article>
+    `).join("");
+
+    document.querySelectorAll("button[data-kind]").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const [text]=ITEMS[Number(btn.dataset.i)];
+        play(btn.dataset.kind,text,btn);
+      });
+    });
+  </script>
+</body>
+</html>

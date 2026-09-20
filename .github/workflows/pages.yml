@@ -53,6 +53,21 @@ jobs:
       - name: Generate Kokoro Spanish audio
         run: python scripts/generate_audio.py
 
+      - name: Restore Chatterbox A/B test cache
+        id: chatterbox-test-cache
+        uses: actions/cache@v4
+        with:
+          path: voice-test/chatterbox-manifest.js
+          key: chatterbox-v3-spanish-test-${{ hashFiles('scripts/generate_chatterbox_test.py') }}
+
+      - name: Install Chatterbox TTS for A/B test
+        if: steps.chatterbox-test-cache.outputs.cache-hit != 'true'
+        run: python -m pip install chatterbox-tts
+
+      - name: Generate Chatterbox V3 A/B samples
+        if: steps.chatterbox-test-cache.outputs.cache-hit != 'true'
+        run: python scripts/generate_chatterbox_test.py
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
