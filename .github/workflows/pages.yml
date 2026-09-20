@@ -60,9 +60,16 @@ jobs:
           path: voice-test/chatterbox-manifest.js
           key: chatterbox-v3-spanish-test-${{ hashFiles('scripts/generate_chatterbox_test.py') }}
 
-      - name: Install Chatterbox TTS for A/B test
+      - name: Cache Chatterbox V3 model files
         if: steps.chatterbox-test-cache.outputs.cache-hit != 'true'
-        run: python -m pip install chatterbox-tts
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface/hub/models--ResembleAI--chatterbox
+          key: chatterbox-v3-model-linux-20260920
+
+      - name: Install Chatterbox V3 for A/B test
+        if: steps.chatterbox-test-cache.outputs.cache-hit != 'true'
+        run: python -m pip install "git+https://github.com/resemble-ai/chatterbox.git@5de7a54aa4e5e2baadb0182dde554908b48b85c2"
 
       - name: Generate Chatterbox V3 A/B samples
         if: steps.chatterbox-test-cache.outputs.cache-hit != 'true'
