@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import base64
 import hashlib
 import json
 from pathlib import Path
@@ -89,9 +90,15 @@ def main():
         json.dumps(manifest, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    embedded_manifest = {}
+    for text, relative_path in manifest.items():
+        audio_bytes = (ROOT / relative_path).read_bytes()
+        encoded = base64.b64encode(audio_bytes).decode("ascii")
+        embedded_manifest[text] = f"data:audio/wav;base64,{encoded}"
+
     MANIFEST_JS_PATH.write_text(
         "window.KOKORO_AUDIO_MANIFEST = " +
-        json.dumps(manifest, ensure_ascii=False, separators=(",", ":")) +
+        json.dumps(embedded_manifest, ensure_ascii=False, separators=(",", ":")) +
         ";\n",
         encoding="utf-8",
     )
