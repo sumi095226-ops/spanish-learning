@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -24,15 +24,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Restore generated TTS cache
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache Kokoro model files
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/torch
+          key: kokoro-model-${{ runner.os }}-v1
+
+      - name: Cache generated Spanish audio
         uses: actions/cache@v4
         with:
           path: audio
-          key: spanish-tts-v2-natural-${{ hashFiles('scripts/generate_audio.py') }}
+          key: kokoro-spanish-audio-${{ hashFiles('scripts/generate_audio.py') }}
 
-      - name: Generate high-quality Spanish audio
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - name: Install Kokoro TTS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y espeak-ng
+          python -m pip install --upgrade pip
+          python -m pip install "kokoro>=0.7.11" soundfile numpy
+
+      - name: Generate Kokoro Spanish audio
         run: python scripts/generate_audio.py
 
       - name: Setup Pages

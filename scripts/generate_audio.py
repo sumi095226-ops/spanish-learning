@@ -1,25 +1,17 @@
 #!/usr/bin/env python3
 import hashlib
 import json
-import os
-import time
-import urllib.error
-import urllib.request
 from pathlib import Path
 
-MODEL = "gpt-4o-mini-tts-2025-12-15"
-VOICE = "cedar"
+import numpy as np
+import soundfile as sf
+from kokoro import KPipeline
+
+VOICE = "ef_dora"
+LANG_CODE = "e"
 SPEED = 1.0
-INSTRUCTIONS = (
-    "Speak the Spanish exactly as written, and nothing else. Sound like a real native Spanish speaker "
-    "talking casually to one person in everyday conversation, not like a narrator, announcer, GPS, "
-    "language-learning robot, or audiobook. Use a natural Latin American Spanish accent, warm and relaxed. "
-    "Use human conversational prosody: natural rhythm, connected speech, subtle pitch movement, normal "
-    "micro-pauses, and gentle sentence-final intonation. Do not over-enunciate syllables and do not speak "
-    "artificially slowly. For a single word, imagine a friend asked how the word sounds: say it once, "
-    "naturally and confidently, without adding a carrier phrase. Preserve normal stress and pronunciation. "
-    "Do not spell, translate, explain, or add any extra words."
-)
+SAMPLE_RATE = 24000
+AUDIO_VERSION = "kokoro-v1"
 
 PHRASES = [
     "¿Me puede ayudar?",
@@ -52,74 +44,51 @@ MANIFEST_PATH = AUDIO_DIR / "manifest.json"
 AUDIO_DIR.mkdir(exist_ok=True)
 
 def filename_for(text: str) -> str:
-    digest = hashlib.sha1(text.encode("utf-8")).hexdigest()[:18]
+    digest = hashlib.sha1(f"{AUDIO_VERSION}|{VOICE}|{text}".encode("utf-8")).hexdigest()[:18]
     return f"{digest}.wav"
 
-def generate(text: str, out_path: Path, api_key: str):
-    body = json.dumps({
-        "model": MODEL,
-        "voice": VOICE,
-        "input": text,
-        "instructions": INSTRUCTIONS,
-        "response_format": "wav",
-        "speed": SPEED,
-    }, ensure_ascii=False).encode("utf-8")
+def to_numpy(audio):
+    if hasattr(audio, "detach"):
+        audio = audio.detach().cpu().numpy()
+    return np.asarray(audio, dtype=np.float32).reshape(-1)
 
-    req = urllib.request.Request(
-        "https://api.openai.com/v1/audio/speech",
-        data=body,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
+def generate_one(pipeline, text: str, out_path: Path):
+    chunks = []
+    for _, _, audio in pipeline(text, voice=VOICE, speed=SPEED):
+        arr = to_numpy(audio)
+        if arr.size:
+            chunks.append(arr)
 
-    last_error = None
-    for attempt in range(4):
-        try:
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                out_path.write_bytes(resp.read())
-            return
-        except urllib.error.HTTPError as e:
-            details = e.read().decode("utf-8", errors="replace")
-            last_error = RuntimeError(f"OpenAI TTS HTTP {e.code}: {details}")
-            if e.code not in (429, 500, 502, 503, 504):
-                break
-        except Exception as e:
-            last_error = e
-        time.sleep(2 ** attempt)
+    if not chunks:
+        raise RuntimeError(f"Kokoro produced no audio for: {text}")
 
-    raise last_error or RuntimeError("Unknown TTS generation failure")
+    waveform = np.concatenate(chunks)
+    sf.write(out_path, waveform, SAMPLE_RATE, subtype="PCM_16")
 
 def main():
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    print(f"Loading Kokoro Spanish pipeline ({VOICE})...")
+    pipeline = KPipeline(lang_code=LANG_CODE)
+
     unique_phrases = list(dict.fromkeys(PHRASES))
     manifest = {}
-
-    if not api_key:
-        raise RuntimeError(
-            "OPENAI_API_KEY is not configured. Add it in GitHub repository Settings > "
-            "Secrets and variables > Actions so high-quality Spanish audio can be generated."
-        )
 
     for i, text in enumerate(unique_phrases, 1):
         filename = filename_for(text)
         out_path = AUDIO_DIR / filename
         manifest[text] = f"audio/{filename}"
 
-        if out_path.exists() and out_path.stat().st_size > 1000:
+        if out_path.exists() and out_path.stat().st_size > 1500:
             print(f"[{i}/{len(unique_phrases)}] cached: {text}")
             continue
 
         print(f"[{i}/{len(unique_phrases)}] generating: {text}")
-        generate(text, out_path, api_key)
+        generate_one(pipeline, text, out_path)
 
     MANIFEST_PATH.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    print(f"Generated/verified {len(manifest)} high-quality Spanish audio clips.")
+    print(f"Generated/verified {len(manifest)} Kokoro Spanish audio clips with {VOICE}.")
 
 if __name__ == "__main__":
     main()
