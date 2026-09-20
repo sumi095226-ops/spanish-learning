@@ -40,7 +40,7 @@ PHRASES = [
 
 ROOT = Path(__file__).resolve().parents[1]
 AUDIO_DIR = ROOT / "audio"
-MANIFEST_PATH = AUDIO_DIR / "manifest.json"
+MANIFEST_PATH = AUDIO_DIR / "manifest.json"\nMANIFEST_JS_PATH = AUDIO_DIR / "manifest.js"
 AUDIO_DIR.mkdir(exist_ok=True)
 
 def filename_for(text: str) -> str:
@@ -86,6 +86,12 @@ def main():
 
     MANIFEST_PATH.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    MANIFEST_JS_PATH.write_text(
+        "window.KOKORO_AUDIO_MANIFEST = " +
+        json.dumps(manifest, ensure_ascii=False, separators=(",", ":")) +
+        ";\n",
         encoding="utf-8",
     )
     print(f"Generated/verified {len(manifest)} Kokoro Spanish audio clips with {VOICE}.")
