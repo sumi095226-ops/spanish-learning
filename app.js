@@ -320,58 +320,43 @@ function updateVisit(){
 }
 updateVisit();
 
-let spanishVoice = null;
 let highQualityAudioManifest = null;
 let highQualityManifestPromise = null;
 let currentHighQualityAudio = null;
+
+function normalizeAudioKey(text){
+  return String(text ?? "").normalize("NFC").trim();
+}
 
 async function loadHighQualityAudioManifest(){
   if(highQualityAudioManifest) return highQualityAudioManifest;
   if(highQualityManifestPromise) return highQualityManifestPromise;
 
-  highQualityManifestPromise = fetch("audio/manifest.json", {cache:"no-cache"})
-    .then(r => r.ok ? r.json() : {})
-    .catch(() => ({}))
+  highQualityManifestPromise = fetch("audio/manifest.json?v=kokoro-2", {cache:"no-store"})
+    .then(r => {
+      if(!r.ok) throw new Error("Kokoro manifest unavailable");
+      return r.json();
+    })
     .then(data => {
-      highQualityAudioManifest = data || {};
-      return highQualityAudioManifest;
+      const normalized = {};
+      Object.entries(data || {}).forEach(([key,value])=>{
+        normalized[normalizeAudioKey(key)] = value;
+      });
+      highQualityAudioManifest = normalized;
+      return normalized;
+    })
+    .catch(err => {
+      highQualityManifestPromise = null;
+      console.error("Unable to load Kokoro audio manifest", err);
+      throw err;
     });
 
   return highQualityManifestPromise;
 }
 
-function pickNaturalSpanishVoice(){
-  const voices = speechSynthesis.getVoices();
-  const spanish = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith("es"));
-  if(!spanish.length) return null;
-
-  const score = v => {
-    const name = (v.name || "").toLowerCase();
-    const lang = (v.lang || "").toLowerCase();
-    let s = 0;
-    if(name.includes("natural")) s += 100;
-    if(name.includes("neural")) s += 95;
-    if(name.includes("online")) s += 85;
-    if(name.includes("google")) s += 75;
-    if(name.includes("microsoft")) s += 65;
-    if(lang === "es-mx") s += 18;
-    if(lang === "es-us") s += 16;
-    if(lang === "es-es") s += 14;
-    return s;
-  };
-
-  return spanish.sort((a,b) => score(b) - score(a))[0];
-}
-
-function refreshSpanishVoice(){
-  if("speechSynthesis" in window) spanishVoice = pickNaturalSpanishVoice();
-}
-refreshSpanishVoice();
-if("speechSynthesis" in window){
-  speechSynthesis.onvoiceschanged = refreshSpanishVoice;
-}
-
 async function speak(text){
+  const key = normalizeAudioKey(text);
+
   if(currentHighQualityAudio){
     currentHighQualityAudio.pause();
     currentHighQualityAudio.currentTime = 0;
@@ -381,36 +366,36 @@ async function speak(text){
 
   try{
     const manifest = await loadHighQualityAudioManifest();
-    const audioPath = manifest[text];
-    if(audioPath){
-      const audio = new Audio(audioPath);
-      currentHighQualityAudio = audio;
-      audio.addEventListener("ended", ()=>{ if(currentHighQualityAudio === audio) currentHighQualityAudio = null; }, {once:true});
-      await audio.play();
+    const audioPath = manifest[key];
+
+    if(!audioPath){
+      console.error("No Kokoro clip for:", key);
+      alert("這個發音音檔暫時沒有載入，請重新整理後再試。");
       return;
     }
+
+    const audioUrl = new URL(audioPath, document.baseURI);
+    audioUrl.searchParams.set("v","kokoro-2");
+
+    const audio = new Audio(audioUrl.href);
+    audio.preload = "auto";
+    currentHighQualityAudio = audio;
+    audio.addEventListener("ended", ()=>{
+      if(currentHighQualityAudio === audio) currentHighQualityAudio = null;
+    }, {once:true});
+    audio.addEventListener("error", ()=>{
+      console.error("Kokoro audio failed:", audioUrl.href);
+    }, {once:true});
+
+    await audio.play();
   }catch(e){
-    console.warn("High-quality audio unavailable; using browser fallback.", e);
+    console.error("Kokoro playback failed", e);
+    alert("語音載入失敗，請重新整理頁面後再試。");
   }
-
-  if(!("speechSynthesis" in window)){
-    alert("目前無法播放語音");
-    return;
-  }
-
-  const u = new SpeechSynthesisUtterance(text);
-  if(!spanishVoice) refreshSpanishVoice();
-  if(spanishVoice){
-    u.voice = spanishVoice;
-    u.lang = spanishVoice.lang;
-  }else{
-    u.lang = "es-ES";
-  }
-  u.rate = 1.0;
-  u.pitch = 1.0;
-  u.volume = 1.0;
-  speechSynthesis.speak(u);
 }
+
+// Preload the manifest once so every lesson uses the exact same Kokoro audio pipeline.
+loadHighQualityAudioManifest().catch(()=>{});
 document.addEventListener("click", e=>{
   const s = e.target.closest("[data-speak]");
   if(s){ e.stopPropagation(); speak(s.dataset.speak); }
