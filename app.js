@@ -92,6 +92,204 @@ const DATA = {
   }
 };
 
+
+const PLACEMENT_LEVELS = ["A1","A2","B1","B2"];
+
+const PLACEMENT_QUESTIONS = [
+  {level:0,q:"¿Cómo te llamas? 是什麼意思？",correct:"你叫什麼名字？",options:["你叫什麼名字？","你住在哪裡？","你幾歲？","你要去哪裡？"]},
+  {level:0,q:"Yo ___ estudiante.",correct:"soy",options:["soy","eres","está","son"]},
+  {level:0,q:"「兩杯咖啡」是哪一個？",correct:"dos cafés",options:["dos cafés","tres cafés","un café","cinco cafés"]},
+  {level:0,q:"¿Dónde está el baño? 是什麼意思？",correct:"廁所在哪裡？",options:["廁所在哪裡？","飯店多少錢？","幾點吃早餐？","車站遠嗎？"]},
+  {level:0,q:"Ella ___ de México.",correct:"es",options:["es","soy","eres","estoy"]},
+  {level:0,q:"「謝謝」的西班牙文是？",correct:"gracias",options:["gracias","perdón","hola","adiós"]},
+
+  {level:1,q:"Ayer ___ al cine.",correct:"fui",options:["fui","voy","iba","iré"]},
+  {level:1,q:"Vivo aquí ___ 2024.",correct:"desde",options:["desde","por","para","hasta"]},
+  {level:1,q:"Mi hermano es ___ alto que yo.",correct:"más",options:["más","muy","tan","mucho"]},
+  {level:1,q:"¿Qué significa «todavía»?",correct:"仍然／還",options:["仍然／還","從不","立刻","也許"]},
+  {level:1,q:"Esta mochila es ___ pesada que esa.",correct:"menos",options:["menos","muy","mucho","tan"]},
+  {level:1,q:"¿Has ___ alguna vez en España?",correct:"estado",options:["estado","estás","estar","estuve"]},
+
+  {level:2,q:"Cuando era niño, ___ al fútbol todos los días.",correct:"jugaba",options:["jugaba","jugué","jugaré","jugaría"]},
+  {level:2,q:"Espero que ___ mañana.",correct:"vengas",options:["vengas","vienes","vendrás","venir"]},
+  {level:2,q:"Este regalo es ___ ti.",correct:"para",options:["para","por","de","a"]},
+  {level:2,q:"Si tengo tiempo esta noche, te ___.",correct:"llamaré",options:["llamaré","llamara","llamaba","llamé"]},
+  {level:2,q:"No salí porque ___ lloviendo.",correct:"estaba",options:["estaba","era","fue","sea"]},
+  {level:2,q:"Busco un piso que ___ cerca del centro.",correct:"esté",options:["esté","está","estuvo","estará"]},
+
+  {level:3,q:"Si lo hubiera sabido, no ___.",correct:"habría ido",options:["habría ido","fui","iría","iba"]},
+  {level:3,q:"No creo que ___ suficiente tiempo.",correct:"tengamos",options:["tengamos","tenemos","tendremos","tuvimos"]},
+  {level:3,q:"Lleva tres años ___ español.",correct:"estudiando",options:["estudiando","estudiado","estudiar","estudia"]},
+  {level:3,q:"Por mucho que lo ___, no consigo entenderlo.",correct:"lea",options:["lea","leo","leeré","leí"]},
+  {level:3,q:"De haberlo sabido, te ___ antes.",correct:"habría avisado",options:["habría avisado","avisaba","avisé","avisaré"]},
+  {level:3,q:"Me sorprendió que no me ___.",correct:"hubieras llamado",options:["hubieras llamado","has llamado","llamarás","llamabas"]}
+];
+
+const PLACEMENT_PATHS = {
+  A1:{label:"A1 基礎",section:"pronunciation",path:"發音入門",button:"從發音入門開始",desc:"先建立發音、基本單字與最常用句型，之後再往文法與會話前進。"},
+  A2:{label:"A2 初級",section:"grammar",path:"句型文法",button:"從句型文法開始",desc:"你的基礎單字已有一定程度，建議直接從核心文法開始，遇到不熟單字再回頭補。"},
+  B1:{label:"B1 中級",section:"conversation",path:"情境會話",button:"從情境會話開始",desc:"你已經具備日常溝通基礎，建議跳過最前面的入門內容，直接進入情境應用與測驗。"},
+  B2:{label:"B2 中高級",section:"conversation",path:"情境會話＋測驗",button:"直接進入應用練習",desc:"你的基礎已高於本站入門內容，系統會保留 B2 程度，建議直接使用情境會話與測驗做複習。"}
+};
+
+let placementAbility = 0;
+let placementAsked = 0;
+let placementCorrect = 0;
+let placementCurrent = null;
+let placementUsed = new Set();
+let placementCanClose = false;
+const PLACEMENT_TOTAL = 10;
+
+function experienceSeed(value){
+  return [0.05,0.45,1.15,1.95,2.7][Number(value)] ?? 0.05;
+}
+
+function openPlacement(canClose = true){
+  placementCanClose = canClose;
+  $("#placementOverlay").classList.remove("hidden");
+  $("#placementCloseBtn").classList.toggle("hidden", !canClose);
+  $("#placementIntro").classList.remove("hidden");
+  $("#placementQuiz").classList.add("hidden");
+  $("#placementResult").classList.add("hidden");
+}
+
+function closePlacement(){
+  if(placementCanClose) $("#placementOverlay").classList.add("hidden");
+}
+
+function startPlacement(experience){
+  placementAbility = experienceSeed(experience);
+  placementAsked = 0;
+  placementCorrect = 0;
+  placementUsed = new Set();
+  $("#placementIntro").classList.add("hidden");
+  $("#placementResult").classList.add("hidden");
+  $("#placementQuiz").classList.remove("hidden");
+  renderPlacementQuestion();
+}
+
+function choosePlacementQuestion(){
+  let target = Math.max(0, Math.min(3, Math.round(placementAbility)));
+  for(let distance=0; distance<4; distance++){
+    for(const candidate of [target-distance,target+distance]){
+      if(candidate < 0 || candidate > 3) continue;
+      const available = PLACEMENT_QUESTIONS.filter((q,i)=>q.level===candidate && !placementUsed.has(i));
+      if(available.length){
+        const q = available[Math.floor(Math.random()*available.length)];
+        const idx = PLACEMENT_QUESTIONS.indexOf(q);
+        placementUsed.add(idx);
+        return q;
+      }
+    }
+  }
+  return null;
+}
+
+function renderPlacementQuestion(){
+  placementCurrent = choosePlacementQuestion();
+  if(!placementCurrent){ finishPlacement(); return; }
+
+  $("#placementCount").textContent = `${placementAsked+1} / ${PLACEMENT_TOTAL}`;
+  $("#placementProgress").style.width = `${(placementAsked/PLACEMENT_TOTAL)*100}%`;
+  $("#placementDifficulty").textContent = PLACEMENT_LEVELS[placementCurrent.level];
+  $("#placementQuestion").textContent = placementCurrent.q;
+  $("#placementFeedback").textContent = "";
+  $("#placementNextBtn").classList.add("hidden");
+
+  const options = shuffle(placementCurrent.options);
+  $("#placementOptions").innerHTML = options.map(o =>
+    `<button class="placement-option" data-placement-answer="${o.replaceAll('"','&quot;')}">${o}</button>`
+  ).join("");
+
+  $("#placementOptions .placement-option").forEach(btn=>{
+    btn.onclick = ()=>answerPlacement(btn);
+  });
+}
+
+function answerPlacement(btn){
+  const answer = btn.dataset.placementAnswer;
+  const isCorrect = answer === placementCurrent.correct;
+  const difficulty = placementCurrent.level;
+
+  // 簡化的自適應能力更新：答對較難題提升更多，答錯較簡單題下降更多。
+  const expected = 1 / (1 + Math.exp((difficulty - placementAbility) * 1.55));
+  placementAbility += 0.72 * ((isCorrect ? 1 : 0) - expected);
+  placementAbility = Math.max(0, Math.min(3.25, placementAbility));
+
+  placementAsked++;
+  if(isCorrect) placementCorrect++;
+
+  $("#placementOptions .placement-option").forEach(b=>{
+    b.disabled = true;
+    if(b.dataset.placementAnswer === placementCurrent.correct) b.classList.add("correct");
+    else if(b === btn) b.classList.add("wrong");
+  });
+
+  $("#placementFeedback").textContent = isCorrect
+    ? "✓ 正確"
+    : `答案：${placementCurrent.correct}`;
+
+  $("#placementProgress").style.width = `${(placementAsked/PLACEMENT_TOTAL)*100}%`;
+  $("#placementNextBtn").textContent = placementAsked >= PLACEMENT_TOTAL ? "查看程度" : "下一題";
+  $("#placementNextBtn").classList.remove("hidden");
+}
+
+function calculatedPlacementLevel(){
+  if(placementAbility < 0.72) return "A1";
+  if(placementAbility < 1.48) return "A2";
+  if(placementAbility < 2.35) return "B1";
+  return "B2";
+}
+
+function finishPlacement(){
+  const level = calculatedPlacementLevel();
+  const path = PLACEMENT_PATHS[level];
+
+  state.placementLevel = level;
+  state.placementScore = placementCorrect;
+  state.placementAbility = Number(placementAbility.toFixed(2));
+  save();
+  applyPlacementLevel();
+
+  $("#placementQuiz").classList.add("hidden");
+  $("#placementResult").classList.remove("hidden");
+  $("#placementCloseBtn").classList.remove("hidden");
+  placementCanClose = true;
+  $("#placementLevelBadge").textContent = level;
+  $("#placementResultTitle").textContent = `建議程度：${path.label}`;
+  $("#placementResultText").textContent = path.desc;
+  $("#placementCorrect").textContent = `${placementCorrect} / ${PLACEMENT_TOTAL}`;
+  $("#placementPath").textContent = path.path;
+  $("#placementStartLearningBtn").textContent = path.button;
+  $("#placementStartLearningBtn").dataset.targetSection = path.section;
+}
+
+function applyPlacementLevel(){
+  const level = state.placementLevel;
+  if(!level){
+    $("#currentLevel").textContent = "尚未測驗";
+    $("#homeLevelLabel").textContent = "SPANISH · LEVEL CHECK";
+    $("#recommendedStartBtn").textContent = "先測程度";
+    $("#recommendedStartBtn").dataset.go = "";
+    return;
+  }
+
+  const path = PLACEMENT_PATHS[level];
+  $("#currentLevel").textContent = path.label;
+  $("#homeLevelLabel").textContent = `SPANISH · ${level}`;
+  $("#recommendedStartBtn").textContent = path.button;
+  $("#recommendedStartBtn").dataset.go = path.section;
+}
+
+function resetPlacementOnly(){
+  state.placementLevel = null;
+  state.placementScore = null;
+  state.placementAbility = null;
+  save();
+  applyPlacementLevel();
+  openPlacement(true);
+}
+
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
@@ -175,6 +373,23 @@ function go(section){
 $$("[data-go]").forEach(x=>x.addEventListener("click",()=>go(x.dataset.go)));
 $$(".nav-item").forEach(x=>x.addEventListener("click",()=>go(x.dataset.section)));
 $("#menuBtn").addEventListener("click",()=>$("#sidebar").classList.toggle("open"));
+
+$(".experience-btn").forEach(b=>b.onclick=()=>startPlacement(b.dataset.experience));
+$("#placementNextBtn").onclick=()=> placementAsked >= PLACEMENT_TOTAL ? finishPlacement() : renderPlacementQuestion();
+$("#placementCloseBtn").onclick=closePlacement;
+$("#placementBtn").onclick=()=>openPlacement(true);
+$("#placementRetryBtn").onclick=()=>openPlacement(true);
+$("#placementStartLearningBtn").onclick=()=>{
+  const section = $("#placementStartLearningBtn").dataset.targetSection || "pronunciation";
+  $("#placementOverlay").classList.add("hidden");
+  go(section);
+};
+$("#recommendedStartBtn").onclick=(e)=>{
+  e.preventDefault();
+  if(!state.placementLevel) openPlacement(false);
+  else go(PLACEMENT_PATHS[state.placementLevel].section);
+};
+
 
 function renderVowels(){
   $("#vowelGrid").innerHTML = DATA.vowels.map(v=>`
@@ -320,9 +535,10 @@ $("#startQuizBtn").onclick=startQuiz;$("#retryQuizBtn").onclick=startQuiz;$("#ne
 
 $("#resetBtn").onclick=()=>{
   if(confirm("確定要清除所有學習進度嗎？")){
-    state.completed=[];state.known=[];state.best=null;state.streak=1;state.lastVisit=new Date().toISOString().slice(0,10);save();
-    renderVocab();updateProgress();
+    state.completed=[];state.known=[];state.best=null;state.streak=1;state.lastVisit=new Date().toISOString().slice(0,10);state.placementLevel=null;state.placementScore=null;state.placementAbility=null;save();
+    renderVocab();updateProgress();applyPlacementLevel();openPlacement(false);
   }
 };
 
-renderVowels();renderVocabFilters();renderVocab();renderGrammar();renderScenarios();renderConversation();updateProgress();
+renderVowels();renderVocabFilters();renderVocab();renderGrammar();renderScenarios();renderConversation();updateProgress();applyPlacementLevel();
+if(!state.placementLevel) openPlacement(false);
