@@ -111,14 +111,54 @@ function updateVisit(){
 }
 updateVisit();
 
+let spanishVoice = null;
+
+function pickNaturalSpanishVoice(){
+  const voices = speechSynthesis.getVoices();
+  const spanish = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith("es"));
+  if(!spanish.length) return null;
+
+  const score = v => {
+    const name = (v.name || "").toLowerCase();
+    const lang = (v.lang || "").toLowerCase();
+    let s = 0;
+    if(name.includes("natural")) s += 100;
+    if(name.includes("neural")) s += 95;
+    if(name.includes("online")) s += 85;
+    if(name.includes("google")) s += 75;
+    if(name.includes("microsoft")) s += 65;
+    if(lang === "es-mx") s += 18;
+    if(lang === "es-us") s += 16;
+    if(lang === "es-es") s += 14;
+    if(v.localService === false) s += 8;
+    return s;
+  };
+
+  return spanish.sort((a,b) => score(b) - score(a))[0];
+}
+
+function refreshSpanishVoice(){
+  spanishVoice = pickNaturalSpanishVoice();
+}
+refreshSpanishVoice();
+if("speechSynthesis" in window){
+  speechSynthesis.onvoiceschanged = refreshSpanishVoice;
+}
+
 function speak(text){
   if(!("speechSynthesis" in window)){ alert("此瀏覽器不支援語音播放"); return; }
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = "es-ES"; u.rate = .86;
-  const voices = speechSynthesis.getVoices();
-  const v = voices.find(x => x.lang.toLowerCase().startsWith("es"));
-  if(v) u.voice = v;
+  if(!spanishVoice) refreshSpanishVoice();
+  if(spanishVoice){
+    u.voice = spanishVoice;
+    u.lang = spanishVoice.lang;
+  }else{
+    u.lang = "es-ES";
+  }
+  u.rate = .92;
+  u.pitch = 1.0;
+  u.volume = 1.0;
   speechSynthesis.speak(u);
 }
 document.addEventListener("click", e=>{
