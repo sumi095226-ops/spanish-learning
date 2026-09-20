@@ -201,7 +201,7 @@ function renderPlacementQuestion(){
     `<button class="placement-option" data-placement-answer="${o.replaceAll('"','&quot;')}">${o}</button>`
   ).join("");
 
-  $("#placementOptions .placement-option").forEach(btn=>{
+  $$("#placementOptions .placement-option").forEach(btn=>{
     btn.onclick = ()=>answerPlacement(btn);
   });
 }
@@ -219,7 +219,7 @@ function answerPlacement(btn){
   placementAsked++;
   if(isCorrect) placementCorrect++;
 
-  $("#placementOptions .placement-option").forEach(b=>{
+  $$("#placementOptions .placement-option").forEach(b=>{
     b.disabled = true;
     if(b.dataset.placementAnswer === placementCurrent.correct) b.classList.add("correct");
     else if(b === btn) b.classList.add("wrong");
@@ -431,8 +431,8 @@ function go(section){
     renderVowels();
   }
 
-  $(".page").forEach(p=>p.classList.toggle("active", p.id===section));
-  $(".nav-item").forEach(n=>n.classList.toggle("active", n.dataset.section===section));
+  $$(".page").forEach(p=>p.classList.toggle("active", p.id===section));
+  $$(".nav-item").forEach(n=>n.classList.toggle("active", n.dataset.section===section));
   window.scrollTo({top:0,behavior:"smooth"});
   $("#sidebar").classList.remove("open");
 }
@@ -440,7 +440,7 @@ $$("[data-go]").forEach(x=>x.addEventListener("click",()=>go(x.dataset.go)));
 $$(".nav-item").forEach(x=>x.addEventListener("click",()=>go(x.dataset.section)));
 $("#menuBtn").addEventListener("click",()=>$("#sidebar").classList.toggle("open"));
 
-$(".experience-btn").forEach(b=>b.onclick=()=>startPlacement(b.dataset.experience));
+$$(".experience-btn").forEach(b=>b.onclick=()=>startPlacement(b.dataset.experience));
 $("#placementNextBtn").onclick=()=> placementAsked >= PLACEMENT_TOTAL ? finishPlacement() : renderPlacementQuestion();
 $("#placementCloseBtn").onclick=closePlacement;
 $("#placementBtn").onclick=()=>openPlacement(true);
