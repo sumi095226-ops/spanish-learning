@@ -28,7 +28,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: audio
-          key: spanish-tts-v1-${{ hashFiles('scripts/generate_audio.py') }}
+          key: spanish-tts-v2-natural-${{ hashFiles('scripts/generate_audio.py') }}
 
       - name: Generate high-quality Spanish audio
         env:
