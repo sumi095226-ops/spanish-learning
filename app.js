@@ -356,10 +356,12 @@ function speak(text){
   }
 
   // Resolve relative to the site root and start playback immediately in the click handler.
-  const audioUrl = new URL(audioPath, document.baseURI);
+  const audioSrc = audioPath.startsWith("data:")
+    ? audioPath
+    : new URL(audioPath, document.baseURI).href;
   const audio = new Audio();
   audio.preload = "auto";
-  audio.src = audioUrl.href;
+  audio.src = audioSrc;
   currentHighQualityAudio = audio;
 
   audio.addEventListener("ended", ()=>{
@@ -367,7 +369,7 @@ function speak(text){
   }, {once:true});
 
   audio.addEventListener("error", ()=>{
-    console.error("Kokoro audio file failed:", audioUrl.href, audio.error);
+    console.error("Kokoro audio failed:", key, audio.error);
     if(currentHighQualityAudio === audio) currentHighQualityAudio = null;
     alert("這個音檔載入失敗，請再按一次；如果持續發生請重新整理頁面。");
   }, {once:true});
