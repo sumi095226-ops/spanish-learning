@@ -44,8 +44,9 @@
     <div class="main-wrap">
       <header class="topbar">
         <button class="menu-btn" id="menuBtn" aria-label="開啟選單">☰</button>
-        <div class="level-pill">目前程度 <strong>A1 入門</strong></div>
+        <div class="level-pill">目前程度 <strong id="currentLevel">尚未測驗</strong></div>
         <div class="top-actions">
+          <button class="ghost-btn" id="placementBtn">重新測程度</button>
           <button class="ghost-btn" id="resetBtn">重設進度</button>
         </div>
       </header>
@@ -54,11 +55,11 @@
         <section class="page active" id="home">
           <div class="hero">
             <div class="hero-copy">
-              <span class="eyebrow">SPANISH · A1</span>
+              <span class="eyebrow" id="homeLevelLabel">SPANISH · LEVEL CHECK</span>
               <h1>每天 15 分鐘，<br>把西班牙文學起來。</h1>
               <p>從發音、常用單字、基礎句型開始。每一課都可以直接聽發音，學完立刻做題。</p>
               <div class="hero-actions">
-                <button class="primary-btn" data-go="pronunciation">開始第一課</button>
+                <button class="primary-btn" id="recommendedStartBtn" data-go="pronunciation">開始學習</button>
                 <button class="secondary-btn" data-go="quiz">直接測驗</button>
               </div>
               <div class="mini-stats">
@@ -87,7 +88,7 @@
           <div class="section-heading">
             <div>
               <span class="eyebrow">LEARNING PATH</span>
-              <h2>你的入門路線</h2>
+              <h2>你的學習路線</h2>
             </div>
             <span class="muted">建議依序完成</span>
           </div>
@@ -263,6 +264,62 @@
         <span>¡Hola! Spanish Learning · A1 Starter</span>
         <span>瀏覽器語音由 Web Speech API 提供</span>
       </footer>
+    </div>
+  </div>
+
+
+  <div class="placement-overlay hidden" id="placementOverlay" role="dialog" aria-modal="true" aria-labelledby="placementTitle">
+    <div class="placement-modal">
+      <button class="placement-close hidden" id="placementCloseBtn" aria-label="關閉程度測驗">×</button>
+
+      <div id="placementIntro">
+        <span class="eyebrow">PLACEMENT TEST</span>
+        <h2 id="placementTitle">先找出適合你的程度</h2>
+        <p>先告訴我你大概學過多久。這個選項只會決定<strong>測驗從哪個難度開始</strong>，最後程度仍然依答題結果判定。</p>
+
+        <div class="experience-grid">
+          <button class="experience-btn" data-experience="0">
+            <strong>完全沒學過</strong><span>第一次接觸西班牙文</span>
+          </button>
+          <button class="experience-btn" data-experience="1">
+            <strong>學過不到半年</strong><span>會一些單字、基本句子</span>
+          </button>
+          <button class="experience-btn" data-experience="2">
+            <strong>大約半年～1 年</strong><span>有基礎文法與日常會話經驗</span>
+          </button>
+          <button class="experience-btn" data-experience="3">
+            <strong>大約 1～2 年</strong><span>能處理一般生活情境</span>
+          </button>
+          <button class="experience-btn" data-experience="4">
+            <strong>2 年以上／有檢定經驗</strong><span>直接從較難題目開始</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="placementQuiz" class="hidden">
+        <div class="placement-top">
+          <span id="placementCount">1 / 10</span>
+          <div class="placement-progress"><span id="placementProgress"></span></div>
+          <span id="placementDifficulty">A1</span>
+        </div>
+        <div class="placement-question" id="placementQuestion"></div>
+        <div class="placement-options" id="placementOptions"></div>
+        <div class="placement-feedback" id="placementFeedback"></div>
+        <button class="primary-btn hidden" id="placementNextBtn">下一題</button>
+      </div>
+
+      <div id="placementResult" class="hidden">
+        <span class="eyebrow">YOUR LEVEL</span>
+        <div class="placement-level-badge" id="placementLevelBadge">A1</div>
+        <h2 id="placementResultTitle">建議從 A1 開始</h2>
+        <p id="placementResultText"></p>
+        <div class="placement-result-stats">
+          <div><strong id="placementCorrect">0 / 10</strong><span>答對題數</span></div>
+          <div><strong id="placementPath">發音入門</strong><span>建議起點</span></div>
+        </div>
+        <button class="primary-btn" id="placementStartLearningBtn">從建議課程開始</button>
+        <button class="secondary-btn" id="placementRetryBtn">重新測一次</button>
+      </div>
     </div>
   </div>
 
