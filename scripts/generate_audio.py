@@ -40,7 +40,8 @@ PHRASES = [
 
 ROOT = Path(__file__).resolve().parents[1]
 AUDIO_DIR = ROOT / "audio"
-MANIFEST_PATH = AUDIO_DIR / "manifest.json"\nMANIFEST_JS_PATH = AUDIO_DIR / "manifest.js"
+MANIFEST_PATH = AUDIO_DIR / "manifest.json"
+MANIFEST_JS_PATH = AUDIO_DIR / "manifest.js"
 AUDIO_DIR.mkdir(exist_ok=True)
 
 def filename_for(text: str) -> str:
