@@ -406,7 +406,7 @@ async function speak(text){
   }else{
     u.lang = "es-ES";
   }
-  u.rate = .92;
+  u.rate = 1.0;
   u.pitch = 1.0;
   u.volume = 1.0;
   speechSynthesis.speak(u);
