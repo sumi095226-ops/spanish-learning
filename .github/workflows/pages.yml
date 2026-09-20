@@ -24,6 +24,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Restore generated TTS cache
+        uses: actions/cache@v4
+        with:
+          path: audio
+          key: spanish-tts-v1-${{ hashFiles('scripts/generate_audio.py') }}
+
+      - name: Generate high-quality Spanish audio
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python scripts/generate_audio.py
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
