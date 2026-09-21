@@ -158,7 +158,23 @@ function closePlacement(){
 }
 
 function startPlacement(experience){
-  placementAbility = experienceSeed(experience);
+  const experienceLevel = Number(experience);
+
+  // 完全沒學過的人不需要被入門題目測一次：
+  // 直接定位 A1，從發音入門開始。
+  if(experienceLevel === 0){
+    state.placementLevel = "A1";
+    state.placementScore = null;
+    state.placementAbility = 0.05;
+    state.placementMethod = "beginner-skip";
+    save();
+    applyPlacementLevel();
+    $("#placementOverlay").classList.add("hidden");
+    go("pronunciation");
+    return;
+  }
+
+  placementAbility = experienceSeed(experienceLevel);
   placementAsked = 0;
   placementCorrect = 0;
   placementUsed = new Set();
@@ -285,6 +301,7 @@ function resetPlacementOnly(){
   state.placementLevel = null;
   state.placementScore = null;
   state.placementAbility = null;
+  state.placementMethod = null;
   save();
   applyPlacementLevel();
   openPlacement(true);
